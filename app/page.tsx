@@ -506,12 +506,12 @@ export default function FolkWalletPage() {
                                   <h4 className="text-sm sm:text-base font-bold truncate flex-1 min-w-0">{nft.name}</h4>
                                   <span className="shrink-0 text-[9px] font-mono bg-white/10 px-2 py-0.5 rounded-full text-gray-400 border border-white/5">#{nft.id}</span>
                                 </div>
-                                <p className="text-[11px] text-gray-500 mb-4 font-medium tracking-tight uppercase">{nft.collection}</p>
-                                <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                                  <div className="flex flex-col">
-                                    <span className="text-[8px] text-gray-500 uppercase font-bold tracking-[0.1em]">Floor Price</span>
-                                    <span className="text-xs font-mono font-bold text-blue-400 mt-0.5">{nft.floor}</span>
-                                  </div>
+                                <p className="text-[11px] text-gray-500 mb-1 font-medium tracking-tight uppercase">{nft.collection}</p>
+                                <div className="flex items-center gap-2 mb-4">
+                                  <span className="text-[8px] text-gray-500 uppercase font-bold tracking-[0.1em]">Floor</span>
+                                  <span className="text-xs font-mono font-bold text-blue-400">{nft.floor}</span>
+                                </div>
+                                <div className="flex justify-end items-center pt-3 border-t border-white/5">
                                   <button className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors group/btn">
                                     <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover/btn:text-white transition-colors" />
                                   </button>
