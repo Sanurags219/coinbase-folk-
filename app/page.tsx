@@ -277,6 +277,13 @@ export default function FolkWalletPage() {
     tx.hash.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getExplorerUrl = (tx: any) => {
+    const baseUrl = tx.network === 'Bitcoin' ? 'https://mempool.space/tx/' : 
+                   tx.network === 'Solana' ? 'https://solscan.io/tx/' : 
+                   'https://basescan.org/tx/';
+    return `${baseUrl}${tx.hash}`;
+  };
+
   return (
     <div className="flex h-screen w-full bg-[#0A0B0D] text-white font-sans overflow-hidden">
       {/* Sidebar Navigation */}
@@ -744,17 +751,27 @@ export default function FolkWalletPage() {
                                       <div className="space-y-6 lg:pl-4">
                                         <div>
                                           <p className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Universal Hash</p>
-                                          <div className="flex items-center gap-2 group/hash bg-white/5 px-3 py-2 rounded-xl border border-white/10 hover:border-blue-500/30 transition-colors cursor-pointer">
+                                          <a 
+                                            href={getExplorerUrl(tx)} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="flex items-center gap-2 group/hash bg-white/5 px-3 py-2 rounded-xl border border-white/10 hover:border-blue-500/30 transition-colors cursor-pointer"
+                                          >
                                             <p className="text-xs font-mono text-gray-300 group-hover/hash:text-blue-400 transition-colors">{tx.hash}</p>
                                             <ExternalLink className="w-3 h-3 text-gray-600 group-hover/hash:text-blue-400 ml-auto" />
-                                          </div>
+                                          </a>
                                         </div>
 
                                         <div className="flex flex-col gap-2 pt-4">
-                                          <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10">
+                                          <a 
+                                            href={getExplorerUrl(tx)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
+                                          >
                                             View on Explorer
                                             <ExternalLink className="w-3.5 h-3.5" />
-                                          </button>
+                                          </a>
                                           <div className="grid grid-cols-2 gap-2">
                                             <button className="py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-white/10">
                                               Receipt
