@@ -1,6 +1,5 @@
 {
   "name": "Folk Wallet",
-  "description": "A professional onchain wallet for the Folk community, built as a Base Mini App.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "description": "A high-performance, social-ready crypto wallet built for the Farcaster ecosystem.",
+  "requestFramePermissions": []
 }

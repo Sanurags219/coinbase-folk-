@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { 
   LayoutDashboard, 
@@ -14,6 +14,8 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ChevronRight,
+  ChevronDown,
+  ExternalLink,
   Search,
   Bell,
   Copy
@@ -69,6 +71,7 @@ export default function FolkWalletPage() {
   const [isReady, setIsReady] = useState(false);
   const [activeView, setActiveView] = useState<'assets' | 'transactions'>('assets');
   const [txFilter, setTxFilter] = useState<'All' | 'Sent' | 'Received' | 'Swapped'>('All');
+  const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -81,11 +84,81 @@ export default function FolkWalletPage() {
   }, []);
 
   const transactions = [
-    { id: 1, type: 'Swapped', title: 'Swapped ETH for SOL', time: '2 hours ago', amount: '0.5 ETH', status: 'Completed', icon: <ArrowLeftRight className="w-4 h-4" />, iconColor: 'bg-blue-500/20 text-blue-400' },
-    { id: 2, type: 'Sent', title: 'Sent to 0x3...4b2', time: '5 hours ago', amount: '1.2 ETH', status: 'Completed', icon: <ArrowUpRight className="w-4 h-4" />, iconColor: 'bg-red-500/20 text-red-400' },
-    { id: 3, type: 'Received', title: 'Received from 0x7...1a9', time: 'Yesterday', amount: '0.05 BTC', status: 'Completed', icon: <ArrowDownLeft className="w-4 h-4" />, iconColor: 'bg-green-500/20 text-green-400' },
-    { id: 4, type: 'Swapped', title: 'Swapped USDC for wETH', time: '2 days ago', amount: '500 USDC', status: 'Completed', icon: <ArrowLeftRight className="w-4 h-4" />, iconColor: 'bg-blue-500/20 text-blue-400' },
-    { id: 5, type: 'Sent', title: 'Sent to 0x1...8f3', time: '3 days ago', amount: '10.5 SOL', status: 'Completed', icon: <ArrowUpRight className="w-4 h-4" />, iconColor: 'bg-red-500/20 text-red-400' },
+    { 
+      id: 1, 
+      type: 'Swapped', 
+      title: 'Swapped ETH for SOL', 
+      time: '2 hours ago', 
+      amount: '0.5 ETH', 
+      status: 'Completed', 
+      icon: <ArrowLeftRight className="w-4 h-4" />, 
+      iconColor: 'bg-blue-500/20 text-blue-400',
+      hash: '0x74a...8f9e',
+      gasUsed: '21,000 units',
+      gasPrice: '1.2 Gwei',
+      to: '0x3a...ef21',
+      network: 'Base Mainnet'
+    },
+    { 
+      id: 2, 
+      type: 'Sent', 
+      title: 'Sent to 0x3...4b2', 
+      time: '5 hours ago', 
+      amount: '1.2 ETH', 
+      status: 'Completed', 
+      icon: <ArrowUpRight className="w-4 h-4" />, 
+      iconColor: 'bg-red-500/20 text-red-400',
+      hash: '0x12b...3c4d',
+      gasUsed: '21,000 units',
+      gasPrice: '0.8 Gwei',
+      to: '0x3...4b2',
+      network: 'Base Mainnet'
+    },
+    { 
+      id: 3, 
+      type: 'Received', 
+      title: 'Received from 0x7...1a9', 
+      time: 'Yesterday', 
+      amount: '0.05 BTC', 
+      status: 'Completed', 
+      icon: <ArrowDownLeft className="w-4 h-4" />, 
+      iconColor: 'bg-green-500/20 text-green-400',
+      hash: '0x98e...7f65',
+      gasUsed: 'N/A',
+      gasPrice: 'N/A',
+      to: '0x8b...72a1',
+      network: 'Bitcoin'
+    },
+    { 
+      id: 4, 
+      type: 'Swapped', 
+      title: 'Swapped USDC for wETH', 
+      time: '2 days ago', 
+      amount: '500 USDC', 
+      status: 'Completed', 
+      icon: <ArrowLeftRight className="w-4 h-4" />, 
+      iconColor: 'bg-blue-500/20 text-blue-400',
+      hash: '0x55c...de11',
+      gasUsed: '65,241 units',
+      gasPrice: '1.5 Gwei',
+      to: '0x4...9b3',
+      network: 'Base Mainnet'
+    },
+    { 
+      id: 5, 
+      type: 'Sent', 
+      title: 'Sent to 0x1...8f3', 
+      time: '3 days ago', 
+      amount: '10.5 SOL', 
+      status: 'Completed', 
+      icon: <ArrowUpRight className="w-4 h-4" />, 
+      iconColor: 'bg-red-500/20 text-red-400',
+      hash: '3sJ...4mK',
+      gasUsed: '5,000 units',
+      gasPrice: '0.000005 SOL',
+      to: '0x1...8f3',
+      network: 'Solana'
+    },
   ];
 
   const filteredTransactions = txFilter === 'All' 
@@ -349,30 +422,79 @@ export default function FolkWalletPage() {
                     <tbody className="divide-y divide-white/5">
                       <AnimatePresence mode="popLayout">
                         {filteredTransactions.map((tx) => (
-                          <motion.tr 
-                            layout
-                            key={tx.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="hover:bg-white/5 transition-colors cursor-pointer group"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full ${tx.iconColor} flex items-center justify-center shrink-0`}>
-                                  {tx.icon}
+                          <React.Fragment key={tx.id}>
+                            <motion.tr 
+                              layout
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onClick={() => setExpandedTxId(expandedTxId === tx.id ? null : tx.id)}
+                              className={`hover:bg-white/5 transition-colors cursor-pointer group ${expandedTxId === tx.id ? 'bg-white/5' : ''}`}
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-full ${tx.iconColor} flex items-center justify-center shrink-0`}>
+                                    {tx.icon}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">{tx.title}</span>
+                                    <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${expandedTxId === tx.id ? 'rotate-180' : ''}`} />
+                                  </div>
                                 </div>
-                                <span className="font-medium">{tx.title}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 font-mono text-sm">{tx.amount}</td>
-                            <td className="px-6 py-4">
-                              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded-full border border-green-500/20">
-                                {tx.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-xs text-gray-500 uppercase tracking-tight">{tx.time}</td>
-                          </motion.tr>
+                              </td>
+                              <td className="px-6 py-4 font-mono text-sm">{tx.amount}</td>
+                              <td className="px-6 py-4">
+                                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded-full border border-green-500/20">
+                                  {tx.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs text-gray-500 uppercase tracking-tight">{tx.time}</td>
+                            </motion.tr>
+                            
+                            <AnimatePresence>
+                              {expandedTxId === tx.id && (
+                                <motion.tr
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="bg-white/[0.02]"
+                                >
+                                  <td colSpan={4} className="px-6 py-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                                      <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Transaction Hash</p>
+                                        <div className="flex items-center gap-2 group/hash">
+                                          <p className="text-xs font-mono text-gray-300 group-hover/hash:text-blue-400 transition-colors">{tx.hash}</p>
+                                          <ExternalLink className="w-3 h-3 text-gray-600 group-hover/hash:text-blue-400" />
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Gas Used</p>
+                                        <p className="text-xs font-mono text-gray-300">{tx.gasUsed}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Gas Price</p>
+                                        <p className="text-xs font-mono text-gray-300">{tx.gasPrice}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Network</p>
+                                        <p className="text-xs font-mono text-gray-300">{tx.network}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-6 flex items-center gap-4">
+                                      <button className="text-[10px] uppercase font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 border border-blue-400/20 rounded-lg px-3 py-1.5 bg-blue-400/5">
+                                        View on Explorer
+                                        <ExternalLink className="w-3 h-3" />
+                                      </button>
+                                      <button className="text-[10px] uppercase font-bold text-gray-400 hover:text-white transition-colors">
+                                        Download Receipt
+                                      </button>
+                                    </div>
+                                  </td>
+                                </motion.tr>
+                              )}
+                            </AnimatePresence>
+                          </React.Fragment>
                         ))}
                       </AnimatePresence>
                       {filteredTransactions.length === 0 && (
