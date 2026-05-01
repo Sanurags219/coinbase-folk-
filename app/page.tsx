@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { 
+  X,
   LayoutDashboard, 
   RefreshCcw, 
   Globe, 
@@ -24,6 +25,24 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAccount } from 'wagmi';
 
 // Simplified Wagmi/OnchainKit components for the demo
+const EmptyState = ({ title, description, icon, action, onAction }: { title: string, description: string, icon: React.ReactNode, action?: string, onAction?: () => void }) => (
+  <div className="flex flex-col items-center justify-center p-12 text-center">
+    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 text-gray-400">
+      {icon}
+    </div>
+    <h4 className="text-xl font-bold mb-2">{title}</h4>
+    <p className="text-gray-500 text-sm max-w-xs mb-8">{description}</p>
+    {action && (
+      <button 
+        onClick={onAction}
+        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-500/10"
+      >
+        {action}
+      </button>
+    )}
+  </div>
+);
+
 const AssetRow = ({ name, symbol, amount, value, change, color, icon, iconClass = "", changeColor = "text-green-400" }: any) => (
   <div className="flex items-center justify-between p-4 hover:bg-white/5 rounded-2xl transition-colors cursor-pointer group">
     <div className="flex items-center gap-4">
@@ -73,6 +92,9 @@ export default function FolkWalletPage() {
   const [txFilter, setTxFilter] = useState<'All' | 'Sent' | 'Received' | 'Swapped'>('All');
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [sendRecipient, setSendRecipient] = useState('');
+  const [sendAmount, setSendAmount] = useState('');
 
   useEffect(() => {
     const initialize = async () => {
@@ -289,7 +311,10 @@ export default function FolkWalletPage() {
                       <Plus className="w-5 h-5" />
                       Buy
                     </button>
-                    <button className="py-3 bg-white/10 hover:bg-white/20 transition-colors rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => setIsSendModalOpen(true)}
+                      className="py-3 bg-white/10 hover:bg-white/20 transition-colors rounded-xl font-semibold flex items-center justify-center gap-2"
+                    >
                       <ArrowUpRight className="w-5 h-5" />
                       Send
                     </button>
@@ -345,7 +370,13 @@ export default function FolkWalletPage() {
                       asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                       asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
                     ).length === 0 && (
-                      <p className="text-center text-gray-500 py-4 text-sm italic">No assets found matching "{searchQuery}"</p>
+                      <EmptyState 
+                        title="No assets found"
+                        description={searchQuery ? `We couldn't find any assets matching "${searchQuery}".` : "Your wallet is currently empty. Start by adding some funds."}
+                        icon={<Wallet className="w-8 h-8" />}
+                        action={searchQuery ? "Clear Search" : "Add Funds"}
+                        onAction={() => searchQuery ? setSearchQuery('') : console.log('Deposit funds requested')}
+                      />
                     )}
                   </div>
                 </motion.div>
@@ -588,8 +619,17 @@ export default function FolkWalletPage() {
                       </AnimatePresence>
                       {filteredTransactions.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-20 text-center text-gray-500 italic">
-                            No transactions found for this filter.
+                          <td colSpan={4} className="px-6 py-12">
+                            <EmptyState 
+                              title="No history found"
+                              description={searchQuery || txFilter !== 'All' ? "No transactions match your current filters." : "You haven't made any transactions yet."}
+                              icon={<RefreshCcw className="w-8 h-8" />}
+                              action={searchQuery || txFilter !== 'All' ? "Reset Filters" : "Make First Swap"}
+                              onAction={() => {
+                                setSearchQuery('');
+                                setTxFilter('All');
+                              }}
+                            />
                           </td>
                         </tr>
                       )}
@@ -601,6 +641,104 @@ export default function FolkWalletPage() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Send Modal */}
+      <AnimatePresence>
+        {isSendModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSendModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-[#121417] border border-white/10 rounded-3xl shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                <h3 className="text-xl font-bold">Send Tokens</h3>
+                <button 
+                  onClick={() => setIsSendModalOpen(false)}
+                  className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-6">
+                {/* Recipient */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Recipient Address</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="0x... or ENS name"
+                      value={sendRecipient}
+                      onChange={(e) => setSendRecipient(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono text-sm"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                       <Users className="w-4 h-4 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Amount</label>
+                    <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-blue-300">Max: 12.4 ETH</span>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      placeholder="0.00"
+                      value={sendAmount}
+                      onChange={(e) => setSendAmount(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-2xl font-mono text-white placeholder:text-white/20"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+                       <span className="text-sm font-bold">ETH</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
+                    <span>Estimated value: ${sendAmount ? (parseFloat(sendAmount) * 2519.43).toLocaleString() : '0.00'}</span>
+                    <span>Network Fee: ~$0.42</span>
+                  </p>
+                </div>
+
+                {/* Summary Box */}
+                <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Network</span>
+                    <span className="text-gray-200">Base Mainnet</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Estimated Time</span>
+                    <span className="text-green-400">~2 seconds</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-6 bg-white/[0.02] border-t border-white/10">
+                <button 
+                  disabled={!sendRecipient || !sendAmount}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20"
+                >
+                  Confirm Transaction
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
