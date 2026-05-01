@@ -417,7 +417,7 @@ export default function FolkWalletPage() {
                         )}
                       </>
                     ) : (
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                         {nfts
                           .filter(nft => 
                             nft.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -428,20 +428,27 @@ export default function FolkWalletPage() {
                               key={nft.id}
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-all"
+                              whileHover={{ y: -4 }}
+                              className="bg-white/5 rounded-[2rem] border border-white/10 overflow-hidden group cursor-pointer hover:border-blue-500/40 transition-all hover:shadow-2xl hover:shadow-blue-500/10"
                             >
-                              <div className={`aspect-square bg-gradient-to-br ${nft.color} flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-500`}>
+                              <div className={`aspect-square bg-gradient-to-br ${nft.color} flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-700 ease-out relative`}>
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 {nft.emoji}
                               </div>
-                              <div className="p-3">
-                                <div className="flex justify-between items-start mb-1">
-                                  <p className="text-sm font-bold truncate">{nft.name}</p>
-                                  <span className="text-[8px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-gray-400">#{nft.id}</span>
+                              <div className="p-4 sm:p-5">
+                                <div className="flex justify-between items-start gap-2 mb-1.5">
+                                  <h4 className="text-sm sm:text-base font-bold truncate flex-1 min-w-0">{nft.name}</h4>
+                                  <span className="shrink-0 text-[9px] font-mono bg-white/10 px-2 py-0.5 rounded-full text-gray-400 border border-white/5">#{nft.id}</span>
                                 </div>
-                                <p className="text-[10px] text-gray-500 mb-2">{nft.collection}</p>
-                                <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                                  <span className="text-[8px] text-gray-500 uppercase font-bold tracking-widest">Floor</span>
-                                  <span className="text-[10px] font-mono text-blue-400">{nft.floor}</span>
+                                <p className="text-[11px] text-gray-500 mb-4 font-medium tracking-tight uppercase">{nft.collection}</p>
+                                <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                  <div className="flex flex-col">
+                                    <span className="text-[8px] text-gray-500 uppercase font-bold tracking-[0.1em]">Floor Price</span>
+                                    <span className="text-xs font-mono font-bold text-blue-400 mt-0.5">{nft.floor}</span>
+                                  </div>
+                                  <button className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors group/btn">
+                                    <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover/btn:text-white transition-colors" />
+                                  </button>
                                 </div>
                               </div>
                             </motion.div>
