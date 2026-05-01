@@ -90,6 +90,7 @@ export default function FolkWalletPage() {
   const { isConnected, address } = useAccount();
   const [isReady, setIsReady] = useState(false);
   const [activeView, setActiveView] = useState<'assets' | 'transactions'>('assets');
+  const [assetView, setAssetView] = useState<'list' | 'gallery'>('list');
   const [txFilter, setTxFilter] = useState<'All' | 'Sent' | 'Received' | 'Swapped'>('All');
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,6 +120,15 @@ export default function FolkWalletPage() {
     { name: "Ethereum", symbol: "ETH", amount: "12.4", value: "$31,241.02", change: "+1.2%", color: "bg-[#627EEA]" , icon: "Ξ" },
     { name: "Bitcoin", symbol: "BTC", amount: "0.14", value: "$8,921.45", change: "-0.4%", changeColor: "text-red-400", color: "bg-[#F7931A]", icon: "₿" },
     { name: "Solana", symbol: "SOL", amount: "18.2", value: "$1,906.74", change: "+5.8%", color: "bg-[#14F195]", icon: "S", iconClass: "text-black" },
+  ];
+
+  const nfts = [
+    { id: "042", name: "Folk Farmer", emoji: "👨🌾", color: "from-indigo-500/20 to-purple-500/20", collection: "Folk Club", floor: "0.05 ETH" },
+    { id: "119", name: "Cottage Core", emoji: "🏡", color: "from-emerald-500/20 to-teal-500/20", collection: "Folk Club", floor: "0.12 ETH" },
+    { id: "088", name: "Blue Weaver", emoji: "🧶", color: "from-blue-500/20 to-cyan-500/20", collection: "Folk Club", floor: "0.08 ETH" },
+    { id: "214", name: "Harvest Moon", emoji: "🌙", color: "from-amber-500/20 to-orange-500/20", collection: "Folk Club", floor: "0.15 ETH" },
+    { id: "302", name: "Iron Smith", emoji: "⚒️", color: "from-slate-500/20 to-zinc-500/20", collection: "Folk Club", floor: "0.04 ETH" },
+    { id: "441", name: "Golden Grain", emoji: "🌾", color: "from-yellow-500/20 to-amber-500/20", collection: "Folk Club", floor: "0.09 ETH" },
   ];
 
   const transactions = [
@@ -345,7 +355,23 @@ export default function FolkWalletPage() {
                   className="flex-1 bg-white/5 rounded-3xl border border-white/10 p-6"
                 >
                   <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                    <h3 className="text-lg font-bold">Assets</h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-bold">Assets</h3>
+                      <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 overflow-hidden">
+                        <button 
+                          onClick={() => setAssetView('list')}
+                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${assetView === 'list' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          List
+                        </button>
+                        <button 
+                          onClick={() => setAssetView('gallery')}
+                          className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${assetView === 'gallery' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          Gallery
+                        </button>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-3.5 h-3.5" />
@@ -363,29 +389,79 @@ export default function FolkWalletPage() {
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {assets
-                      .filter(asset => 
-                        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((asset, index) => (
-                        <AssetRow 
-                          key={index}
-                          {...asset}
-                        />
-                      ))
-                    }
-                    {assets.filter(asset => 
-                      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-                    ).length === 0 && (
-                      <EmptyState 
-                        title="No assets found"
-                        description={searchQuery ? `We couldn't find any assets matching "${searchQuery}".` : "Your wallet is currently empty. Start by adding some funds."}
-                        icon={<Wallet className="w-8 h-8" />}
-                        action={searchQuery ? "Clear Search" : "Add Funds"}
-                        onAction={() => searchQuery ? setSearchQuery('') : console.log('Deposit funds requested')}
-                      />
+                    {assetView === 'list' ? (
+                      <>
+                        {assets
+                          .filter(asset => 
+                            asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((asset, index) => (
+                            <AssetRow 
+                              key={index}
+                              {...asset}
+                            />
+                          ))
+                        }
+                        {assets.filter(asset => 
+                          asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length === 0 && (
+                          <EmptyState 
+                            title="No assets found"
+                            description={searchQuery ? `We couldn't find any assets matching "${searchQuery}".` : "Your wallet is currently empty. Start by adding some funds."}
+                            icon={<Wallet className="w-8 h-8" />}
+                            action={searchQuery ? "Clear Search" : "Add Funds"}
+                            onAction={() => searchQuery ? setSearchQuery('') : console.log('Deposit funds requested')}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                        {nfts
+                          .filter(nft => 
+                            nft.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            nft.collection.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((nft) => (
+                            <motion.div 
+                              key={nft.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-all"
+                            >
+                              <div className={`aspect-square bg-gradient-to-br ${nft.color} flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-500`}>
+                                {nft.emoji}
+                              </div>
+                              <div className="p-3">
+                                <div className="flex justify-between items-start mb-1">
+                                  <p className="text-sm font-bold truncate">{nft.name}</p>
+                                  <span className="text-[8px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-gray-400">#{nft.id}</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mb-2">{nft.collection}</p>
+                                <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                                  <span className="text-[8px] text-gray-500 uppercase font-bold tracking-widest">Floor</span>
+                                  <span className="text-[10px] font-mono text-blue-400">{nft.floor}</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))
+                        }
+                        {nfts.filter(nft => 
+                          nft.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          nft.collection.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length === 0 && (
+                          <div className="col-span-full">
+                            <EmptyState 
+                              title="No NFTs found"
+                              description={searchQuery ? `We couldn't find any NFTs matching "${searchQuery}".` : "You don't own any NFTs yet."}
+                              icon={<Globe className="w-8 h-8" />}
+                              action={searchQuery ? "Clear Search" : "Mint NFT"}
+                              onAction={() => searchQuery ? setSearchQuery('') : console.log('Minting requested')}
+                            />
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </motion.div>
