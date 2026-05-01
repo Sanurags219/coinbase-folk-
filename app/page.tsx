@@ -649,7 +649,12 @@ export default function FolkWalletPage() {
                               </td>
                               <td className="px-6 py-4 font-mono text-sm">{tx.amount}</td>
                               <td className="px-6 py-4">
-                                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded-full border border-green-500/20">
+                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${
+                                  tx.type === 'Sent' ? 'bg-red-500/20 text-red-400 border-red-500/20' :
+                                  tx.type === 'Received' ? 'bg-green-500/20 text-green-400 border-green-500/20' :
+                                  tx.type === 'Swapped' ? 'bg-blue-500/20 text-blue-400 border-blue-500/20' :
+                                  'bg-gray-500/20 text-gray-400 border-gray-500/20'
+                                }`}>
                                   {tx.status}
                                 </span>
                               </td>
