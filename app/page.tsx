@@ -133,13 +133,30 @@ export default function FolkWalletPage() {
 
     if (isEnsName) {
       if (!isEnsLoading && !ensAddress && sendRecipient.length > 5) {
-        setAddressError('ENS name not found');
+        setAddressError('ENS name not found or unresolvable');
       } else {
         setAddressError(null);
       }
     } else {
-      if (!isAddress(sendRecipient) && sendRecipient.length > 2) {
-        setAddressError('Invalid Ethereum address format');
+      if (sendRecipient.startsWith('0x')) {
+        if (sendRecipient.length === 42) {
+          if (!isAddress(sendRecipient)) {
+            setAddressError('Invalid Ethereum address (checksum check failed)');
+          } else {
+            setAddressError(null);
+          }
+        } else if (sendRecipient.length > 42) {
+          setAddressError('Address is too long (must be 42 characters)');
+        } else if (sendRecipient.length > 2 && !/^0x[0-9a-fA-F]*$/.test(sendRecipient)) {
+          setAddressError('Invalid characters in recipient address');
+        } else if (sendRecipient.length > 10 && sendRecipient.length < 42) {
+          // Only show "too short" if they stop typing or have entered a significant amount
+          setAddressError('Address is too short (must be 42 characters)');
+        } else {
+          setAddressError(null);
+        }
+      } else if (sendRecipient.length > 0) {
+        setAddressError('Enter a valid 0x address or .eth name');
       } else {
         setAddressError(null);
       }
@@ -147,6 +164,13 @@ export default function FolkWalletPage() {
   }, [sendRecipient, ensAddress, isEnsLoading, isEnsName]);
 
   const handleConfirmSend = async () => {
+    // Re-verify address as a final guard
+    const finalValidation = isEnsName ? !!ensAddress : isAddress(sendRecipient);
+    if (!finalValidation) {
+      setAddressError('Please provide a valid recipient address');
+      return;
+    }
+
     if (addressError || !sendRecipient || !sendAmount) return;
     
     setTxStatus('submitting');
