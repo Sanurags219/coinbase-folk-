@@ -19,11 +19,14 @@ import {
   ExternalLink,
   Search,
   Bell,
-  Copy
+  Copy,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAccount, useEnsAddress } from 'wagmi';
 import { mainnet } from 'viem/chains';
+import { isAddress } from 'viem';
 
 // Simplified Wagmi/OnchainKit components for the demo
 const EmptyState = ({ title, description, icon, action, onAction }: { title: string, description: string, icon: React.ReactNode, action?: string, onAction?: () => void }) => (
@@ -97,6 +100,8 @@ export default function FolkWalletPage() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [sendRecipient, setSendRecipient] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+  const [txStatus, setTxStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const [addressError, setAddressError] = useState<string | null>(null);
   
   // ENS Resolution Hook
   const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({
@@ -105,6 +110,47 @@ export default function FolkWalletPage() {
   });
 
   const isEnsName = sendRecipient.endsWith('.eth');
+
+  // Address Validation
+  useEffect(() => {
+    if (!sendRecipient) {
+      setAddressError(null);
+      return;
+    }
+
+    if (isEnsName) {
+      if (!isEnsLoading && !ensAddress && sendRecipient.length > 5) {
+        setAddressError('Invalid or unresolvable ENS name');
+      } else {
+        setAddressError(null);
+      }
+    } else {
+      if (!isAddress(sendRecipient) && sendRecipient.length > 2) {
+        setAddressError('Invalid Ethereum address format');
+      } else {
+        setAddressError(null);
+      }
+    }
+  }, [sendRecipient, ensAddress, isEnsLoading, isEnsName]);
+
+  const handleConfirmSend = async () => {
+    if (addressError || !sendRecipient || !sendAmount) return;
+    
+    setTxStatus('submitting');
+    
+    // Simulate transaction submission
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setTxStatus('success');
+    
+    // Auto-close modal after success message
+    setTimeout(() => {
+      setIsSendModalOpen(false);
+      setTxStatus('idle');
+      setSendRecipient('');
+      setSendAmount('');
+    }, 4000);
+  };
 
   useEffect(() => {
     const initialize = async () => {
@@ -763,90 +809,153 @@ export default function FolkWalletPage() {
               </div>
 
               {/* Body */}
-              <div className="p-6 space-y-6">
-                {/* Recipient */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Recipient Address</label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      placeholder="0x... or ENS name"
-                      value={sendRecipient}
-                      onChange={(e) => setSendRecipient(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono text-sm"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                       {isEnsLoading ? (
-                         <RefreshCcw className="w-4 h-4 text-blue-500 animate-spin" />
-                       ) : isEnsName && ensAddress ? (
-                         <div className="bg-green-500/20 px-2 py-0.5 rounded text-[10px] text-green-400 font-bold border border-green-500/20">RESOLVED</div>
-                       ) : (
-                         <Users className="w-4 h-4 text-gray-500" />
-                       )}
-                    </div>
-                  </div>
-                  {(isEnsName && ensAddress) && (
+              <div className="p-6">
+                <AnimatePresence mode="wait">
+                  {txStatus === 'success' ? (
                     <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2"
+                      key="success"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="py-12 flex flex-col items-center text-center"
                     >
-                      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <Wallet className="w-3 h-3 text-blue-400" />
+                      <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                        >
+                          <CheckCircle2 className="w-10 h-10 text-green-400" />
+                        </motion.div>
                       </div>
-                      <span className="text-[10px] font-mono text-gray-400 truncate flex-1">{ensAddress}</span>
+                      <h4 className="text-2xl font-bold mb-2">Transaction Submitted</h4>
+                      <p className="text-gray-400 text-sm max-w-xs mb-8">Your transaction has been broadcast to the network. It should be confirmed shortly.</p>
+                      
+                      <div className="w-full bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center justify-between mb-4">
+                        <div className="text-left">
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Amount Sent</p>
+                          <p className="text-lg font-mono font-bold text-white">{sendAmount} ETH</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Network</p>
+                          <p className="text-sm font-medium text-gray-300">Base Mainnet</p>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => setIsSendModalOpen(false)}
+                        className="text-blue-400 text-sm font-bold hover:text-blue-300 transition-colors"
+                      >
+                        Close Modal
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="form"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-6"
+                    >
+                      {/* Recipient */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Recipient Address</label>
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            placeholder="0x... or ENS name"
+                            value={sendRecipient}
+                            onChange={(e) => setSendRecipient(e.target.value)}
+                            disabled={txStatus === 'submitting'}
+                            className={`w-full bg-white/5 border rounded-2xl py-3 px-4 focus:outline-none transition-all font-mono text-sm ${addressError ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:ring-2 focus:ring-blue-500/50'}`}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                             {isEnsLoading ? (
+                               <RefreshCcw className="w-4 h-4 text-blue-500 animate-spin" />
+                             ) : isEnsName && ensAddress ? (
+                               <div className="bg-green-500/20 px-2 py-0.5 rounded text-[10px] text-green-400 font-bold border border-green-500/20">RESOLVED</div>
+                             ) : addressError ? (
+                               <AlertCircle className="w-4 h-4 text-red-400" />
+                             ) : (
+                               <Users className="w-4 h-4 text-gray-500" />
+                             )}
+                          </div>
+                        </div>
+                        {addressError && (
+                          <p className="mt-1.5 text-[10px] text-red-400 font-medium flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> {addressError}
+                          </p>
+                        )}
+                        {(isEnsName && ensAddress) && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                              <Wallet className="w-3 h-3 text-blue-400" />
+                            </div>
+                            <span className="text-[10px] font-mono text-gray-400 truncate flex-1">{ensAddress}</span>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Amount */}
+                      <div>
+                        <div className="flex justify-between items-end mb-2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Amount</label>
+                          <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-blue-300 transition-colors">Max: 12.4 ETH</span>
+                        </div>
+                        <div className="relative">
+                          <input 
+                            type="number" 
+                            placeholder="0.00"
+                            value={sendAmount}
+                            onChange={(e) => setSendAmount(e.target.value)}
+                            disabled={txStatus === 'submitting'}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-2xl font-mono text-white placeholder:text-white/20"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+                             <span className="text-sm font-bold">ETH</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
+                          <span>Estimated value: ${sendAmount ? (parseFloat(sendAmount) * 2519.43).toLocaleString() : '0.00'}</span>
+                          <span>Network Fee: ~$0.42</span>
+                        </p>
+                      </div>
+
+                      {/* Summary Box */}
+                      <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Network</span>
+                          <span className="text-gray-200">Base Mainnet</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Estimated Time</span>
+                          <span className="text-green-400">~2 seconds</span>
+                        </div>
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="pt-4">
+                        <button 
+                          onClick={handleConfirmSend}
+                          disabled={!sendRecipient || !sendAmount || !!addressError || txStatus === 'submitting'}
+                          className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center"
+                        >
+                          {txStatus === 'submitting' ? (
+                            <div className="flex items-center gap-2">
+                              <RefreshCcw className="w-4 h-4 animate-spin" />
+                              <span>Submitting...</span>
+                            </div>
+                          ) : (
+                            'Confirm Transaction'
+                          )}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
-                  {(isEnsName && !ensAddress && !isEnsLoading && sendRecipient.length > 5) && (
-                    <p className="mt-1 text-[10px] text-red-400 font-medium">Could not resolve ENS name</p>
-                  )}
-                </div>
-
-                {/* Amount */}
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Amount</label>
-                    <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-blue-300">Max: 12.4 ETH</span>
-                  </div>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      placeholder="0.00"
-                      value={sendAmount}
-                      onChange={(e) => setSendAmount(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-2xl font-mono text-white placeholder:text-white/20"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                       <span className="text-sm font-bold">ETH</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
-                    <span>Estimated value: ${sendAmount ? (parseFloat(sendAmount) * 2519.43).toLocaleString() : '0.00'}</span>
-                    <span>Network Fee: ~$0.42</span>
-                  </p>
-                </div>
-
-                {/* Summary Box */}
-                <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Network</span>
-                    <span className="text-gray-200">Base Mainnet</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Estimated Time</span>
-                    <span className="text-green-400">~2 seconds</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-6 bg-white/[0.02] border-t border-white/10">
-                <button 
-                  disabled={!sendRecipient || !sendAmount}
-                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20"
-                >
-                  Confirm Transaction
-                </button>
+                </AnimatePresence>
               </div>
             </motion.div>
           </div>
