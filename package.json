@@ -10,11 +10,11 @@
     "clean": "next clean"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "^1.0.0",
-    "@farcaster/miniapp-sdk": "^0.0.0",
-    "@google/genai": "^1.1.0",
-    "@hookform/resolvers": "^3.0.0",
-    "@tanstack/react-query": "^5.0.0",
+    "@coinbase/onchainkit": "^1.11.0",
+    "@farcaster/miniapp-sdk": "^0.3.0",
+    "@google/genai": "^1.30.1",
+    "@hookform/resolvers": "^3.9.0",
+    "@tanstack/react-query": "^5.100.0",
     "autoprefixer": "^10.4.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",

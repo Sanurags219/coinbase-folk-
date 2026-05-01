@@ -102,6 +102,7 @@ export default function FolkWalletPage() {
   const [sendAmount, setSendAmount] = useState('');
   const [txStatus, setTxStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const [addressError, setAddressError] = useState<string | null>(null);
+  const [copiedRecipient, setCopiedRecipient] = useState(false);
   
   // ENS Resolution Hook
   const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({
@@ -866,9 +867,27 @@ export default function FolkWalletPage() {
                             value={sendRecipient}
                             onChange={(e) => setSendRecipient(e.target.value)}
                             disabled={txStatus === 'submitting'}
-                            className={`w-full bg-white/5 border rounded-2xl py-3 px-4 focus:outline-none transition-all font-mono text-sm ${addressError ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:ring-2 focus:ring-blue-500/50'}`}
+                            className={`w-full bg-white/5 border rounded-2xl py-3 px-4 pr-12 focus:outline-none transition-all font-mono text-sm ${addressError ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:ring-2 focus:ring-blue-500/50'}`}
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                             {sendRecipient && (
+                               <button 
+                                 onClick={() => {
+                                   navigator.clipboard.writeText(sendRecipient);
+                                   setCopiedRecipient(true);
+                                   setTimeout(() => setCopiedRecipient(false), 2000);
+                                 }}
+                                 className="p-1 hover:bg-white/10 rounded-lg transition-all text-gray-500 hover:text-blue-400 group/copy"
+                               >
+                                 {copiedRecipient ? (
+                                   <div className="flex items-center gap-1">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                                   </div>
+                                 ) : (
+                                   <Copy className="w-3.5 h-3.5" />
+                                 )}
+                               </button>
+                             )}
                              {isEnsLoading && isEnsName ? (
                                <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 rounded-lg border border-blue-500/20">
                                  <RefreshCcw className="w-3 h-3 text-blue-500 animate-spin" />
@@ -908,6 +927,16 @@ export default function FolkWalletPage() {
                               <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Matched Address</span>
                               <span className="text-xs font-mono text-gray-300 truncate">{ensAddress}</span>
                             </div>
+                            <button 
+                              onClick={() => {
+                                if (ensAddress) {
+                                  navigator.clipboard.writeText(ensAddress);
+                                }
+                              }}
+                              className="ml-auto p-2 hover:bg-white/10 rounded-xl transition-all text-gray-500 hover:text-white"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
                           </motion.div>
                         )}
                       </div>
