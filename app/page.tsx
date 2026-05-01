@@ -22,7 +22,8 @@ import {
   Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useAccount } from 'wagmi';
+import { useAccount, useEnsAddress } from 'wagmi';
+import { mainnet } from 'viem/chains';
 
 // Simplified Wagmi/OnchainKit components for the demo
 const EmptyState = ({ title, description, icon, action, onAction }: { title: string, description: string, icon: React.ReactNode, action?: string, onAction?: () => void }) => (
@@ -95,6 +96,14 @@ export default function FolkWalletPage() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [sendRecipient, setSendRecipient] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+  
+  // ENS Resolution Hook
+  const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({
+    name: sendRecipient.endsWith('.eth') ? sendRecipient : undefined,
+    chainId: mainnet.id,
+  });
+
+  const isEnsName = sendRecipient.endsWith('.eth');
 
   useEffect(() => {
     const initialize = async () => {
@@ -684,9 +693,30 @@ export default function FolkWalletPage() {
                       className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono text-sm"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                       <Users className="w-4 h-4 text-gray-500" />
+                       {isEnsLoading ? (
+                         <RefreshCcw className="w-4 h-4 text-blue-500 animate-spin" />
+                       ) : isEnsName && ensAddress ? (
+                         <div className="bg-green-500/20 px-2 py-0.5 rounded text-[10px] text-green-400 font-bold border border-green-500/20">RESOLVED</div>
+                       ) : (
+                         <Users className="w-4 h-4 text-gray-500" />
+                       )}
                     </div>
                   </div>
+                  {(isEnsName && ensAddress) && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <Wallet className="w-3 h-3 text-blue-400" />
+                      </div>
+                      <span className="text-[10px] font-mono text-gray-400 truncate flex-1">{ensAddress}</span>
+                    </motion.div>
+                  )}
+                  {(isEnsName && !ensAddress && !isEnsLoading && sendRecipient.length > 5) && (
+                    <p className="mt-1 text-[10px] text-red-400 font-medium">Could not resolve ENS name</p>
+                  )}
                 </div>
 
                 {/* Amount */}
