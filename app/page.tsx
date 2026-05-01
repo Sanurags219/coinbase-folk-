@@ -1,37 +1,68 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { 
-  ConnectWallet, 
-  Wallet, 
-  WalletDropdown, 
-  WalletDropdownDisconnect, 
-  WalletDropdownLink 
-} from '@coinbase/onchainkit/wallet';
-import { 
-  Address, 
-  Avatar, 
-  Name, 
-  Identity, 
-  EthBalance 
-} from '@coinbase/onchainkit/identity';
-import { 
-  Home, 
   LayoutDashboard, 
+  RefreshCcw, 
   Globe, 
   Users, 
-  Bell, 
-  Plus, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  ArrowLeftRight, 
-  RefreshCcw,
-  ExternalLink,
-  ChevronRight
+  Settings, 
+  Wallet,
+  Plus,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ArrowLeftRight,
+  ChevronRight,
+  Search,
+  Bell,
+  Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAccount } from 'wagmi';
+
+// Simplified Wagmi/OnchainKit components for the demo
+const AssetRow = ({ name, symbol, amount, value, change, color, icon, iconClass = "", changeColor = "text-green-400" }: any) => (
+  <div className="flex items-center justify-between p-4 hover:bg-white/5 rounded-2xl transition-colors cursor-pointer group">
+    <div className="flex items-center gap-4">
+      <div className={`w-12 h-12 ${color} rounded-full flex items-center justify-center text-xl font-bold font-mono shadow-lg ${iconClass}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="font-semibold">{name}</p>
+        <p className="text-gray-500 text-sm">{amount} {symbol}</p>
+      </div>
+    </div>
+    <div className="text-right">
+      <p className="font-mono font-bold">{value}</p>
+      <p className={`text-xs ${changeColor}`}>{change}</p>
+    </div>
+  </div>
+);
+
+const NFTCard = ({ id, emoji, color }: any) => (
+  <div className="aspect-square rounded-xl overflow-hidden relative group cursor-pointer">
+    <div className={`absolute inset-0 bg-gradient-to-br ${color} transition-transform group-hover:scale-110 duration-500`}></div>
+    <div className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-2xl group-hover:scale-125 transition-transform">
+      {emoji}
+    </div>
+    <div className="absolute bottom-2 left-2 right-2 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="text-[10px] font-mono bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">#{id}</span>
+    </div>
+  </div>
+);
+
+const ActivityRow = ({ title, time, icon, iconColor, opacity = "opacity-100" }: any) => (
+  <div className={`flex items-center gap-4 ${opacity}`}>
+    <div className={`w-10 h-10 rounded-full ${iconColor} flex items-center justify-center shrink-0`}>
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-medium truncate">{title}</p>
+      <p className="text-[10px] text-gray-500 uppercase">{time}</p>
+    </div>
+  </div>
+);
 
 export default function FolkWalletPage() {
   const { isConnected, address } = useAccount();
@@ -41,13 +72,13 @@ export default function FolkWalletPage() {
 
   useEffect(() => {
     const initialize = async () => {
-      await sdk.actions.ready();
+      if (typeof window !== 'undefined') {
+        sdk.actions.ready();
+        setIsReady(true);
+      }
     };
-    if (!isReady) {
-      initialize();
-      setIsReady(true);
-    }
-  }, [isReady]);
+    initialize();
+  }, []);
 
   const transactions = [
     { id: 1, type: 'Swapped', title: 'Swapped ETH for SOL', time: '2 hours ago', amount: '0.5 ETH', status: 'Completed', icon: <ArrowLeftRight className="w-4 h-4" />, iconColor: 'bg-blue-500/20 text-blue-400' },
@@ -69,7 +100,7 @@ export default function FolkWalletPage() {
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white rounded-sm rotate-45"></div>
           </div>
-          <span className="text-xl font-bold tracking-tight">Folk Wallet</span>
+          <span className="font-bold text-xl tracking-tight">Folk Wallet</span>
         </div>
 
         <nav className="space-y-1">
@@ -93,59 +124,47 @@ export default function FolkWalletPage() {
           </a>
           <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white transition-colors">
             <Users className="w-5 h-5" />
-            Community
+            Social
           </a>
         </nav>
 
-        <div className="mt-auto p-4 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl border border-white/5">
-          <p className="text-xs text-blue-300 font-semibold mb-1 uppercase tracking-wider">Staking APY</p>
-          <p className="text-lg font-bold">4.2% on ETH</p>
-          <button className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg text-sm font-medium">Stake Now</button>
+        <div className="mt-auto pt-6 border-t border-white/10 space-y-1">
+          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white transition-colors">
+            <Settings className="w-5 h-5" />
+            Settings
+          </a>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-auto">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#0A0B0D]">
         {/* Header */}
-        <header className="h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full text-sm font-mono border border-white/10 text-gray-300">
-              {isConnected ? (
-                <Address address={address} className="text-gray-300" />
-              ) : (
-                "Not Connected"
-              )}
-            </div>
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-gray-400">Base Mainnet</span>
+        <header className="h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 shrink-0 backdrop-blur-md sticky top-0 z-20">
+          <div className="flex-1 max-w-xl relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search assets or addresses..." 
+              className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+            />
           </div>
-          
-          <div className="flex gap-4 items-center">
-            <button className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-lg transition-colors">
+
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-colors border border-white/10">
               <Bell className="w-5 h-5" />
             </button>
-            <div className="wallet-container">
-              <Wallet>
-                <ConnectWallet>
-                  <Avatar className="h-10 w-10" />
-                  <Name />
-                </ConnectWallet>
-                <WalletDropdown>
-                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                    <Avatar />
-                    <Name />
-                    <Address />
-                    <EthBalance />
-                  </Identity>
-                  <WalletDropdownLink
-                    icon="wallet"
-                    href="https://keys.coinbase.com"
-                  >
-                    Wallet
-                  </WalletDropdownLink>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
+            
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-2 pr-4 py-1.5 hover:bg-white/10 transition-all cursor-pointer">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-400 to-rose-400"></div>
+              <div className="hidden sm:block">
+                <p className="text-[10px] text-gray-500 font-bold uppercase leading-none mb-0.5">Wallet</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-mono font-bold tracking-tight">
+                    {isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Disconnected'}
+                  </span>
+                  <Copy className="w-3 h-3 text-gray-500" />
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -371,52 +390,6 @@ export default function FolkWalletPage() {
           )}
         </AnimatePresence>
       </main>
-    </div>
-  );
-}
-
-function AssetRow({ name, symbol, amount, value, change, color, icon, iconClass = "", changeColor = "text-green-400" }: any) {
-  return (
-    <div className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl transition-colors cursor-pointer group">
-      <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center font-bold ${iconClass}`}>
-          {icon}
-        </div>
-        <div>
-          <p className="font-bold">{name}</p>
-          <p className="text-xs text-gray-400">{amount} {symbol}</p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="font-bold">{value}</p>
-        <p className={`text-xs ${changeColor}`}>{change}</p>
-      </div>
-    </div>
-  );
-}
-
-function NFTCard({ id, emoji, color }: any) {
-  return (
-    <div className="aspect-square bg-gray-800 rounded-xl overflow-hidden relative group cursor-pointer">
-      <div className={`absolute inset-0 bg-gradient-to-br ${color}`}></div>
-      <div className="absolute bottom-2 left-2 text-[10px] font-bold bg-black/50 px-1.5 py-0.5 rounded">#{id}</div>
-      <div className="w-full h-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-        {emoji}
-      </div>
-    </div>
-  );
-}
-
-function ActivityRow({ title, time, icon, iconColor, opacity = "" }: any) {
-  return (
-    <div className={`flex gap-3 ${opacity}`}>
-      <div className={`w-8 h-8 rounded-full ${iconColor} flex items-center justify-center shrink-0`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-[10px] text-gray-400 uppercase tracking-tight">{time}</p>
-      </div>
     </div>
   );
 }

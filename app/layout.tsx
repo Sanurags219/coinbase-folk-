@@ -1,38 +1,26 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Providers } from '@/components/Providers';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const rootUrl = process.env.APP_URL || 'http://localhost:3000';
-  return {
-    title: 'Folk Wallet',
-    description: 'Professional Onchain Wallet for the Folk community',
-    other: {
-      'fc:miniapp': JSON.stringify({
-        version: 'next',
-        imageUrl: `${rootUrl}/og.png`,
-        button: {
-          title: 'Launch Folk Wallet',
-          action: {
-            type: 'launch_miniapp',
-            name: 'Folk Wallet',
-            url: rootUrl,
-            splashImageUrl: `${rootUrl}/splash.png`,
-            splashBackgroundColor: '#0A0B0D',
-          },
-        },
-      }),
-    },
-  };
-}
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: "Folk Wallet",
+  description: "Your simple and secure crypto wallet",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning>
-        <Providers>
-          {children}
-        </Providers>
+    <html lang="en" className={inter.variable}>
+      <body className="antialiased font-sans">
+        {children}
       </body>
     </html>
   );
