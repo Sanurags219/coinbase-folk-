@@ -869,32 +869,45 @@ export default function FolkWalletPage() {
                             className={`w-full bg-white/5 border rounded-2xl py-3 px-4 focus:outline-none transition-all font-mono text-sm ${addressError ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:ring-2 focus:ring-blue-500/50'}`}
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                             {isEnsLoading ? (
-                               <RefreshCcw className="w-4 h-4 text-blue-500 animate-spin" />
+                             {isEnsLoading && isEnsName ? (
+                               <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                 <RefreshCcw className="w-3 h-3 text-blue-500 animate-spin" />
+                                 <span className="text-[8px] font-bold text-blue-500 uppercase tracking-tighter">Resolving</span>
+                               </div>
                              ) : isEnsName && ensAddress ? (
-                               <div className="bg-green-500/20 px-2 py-0.5 rounded text-[10px] text-green-400 font-bold border border-green-500/20">RESOLVED</div>
+                               <div className="bg-green-500/20 px-2 py-1 rounded-lg text-[9px] text-green-400 font-bold border border-green-500/20 flex items-center gap-1.5">
+                                 <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
+                                 RESOLVED
+                               </div>
                              ) : addressError ? (
-                               <AlertCircle className="w-4 h-4 text-red-400" />
+                               <AlertCircle className="w-4 h-4 text-red-500" />
                              ) : (
                                <Users className="w-4 h-4 text-gray-500" />
-                             )}
+                           )}
                           </div>
                         </div>
                         {addressError && (
-                          <p className="mt-1.5 text-[10px] text-red-400 font-medium flex items-center gap-1">
+                          <motion.p 
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="mt-2 text-[10px] text-red-400 font-bold uppercase tracking-wider flex items-center gap-1.5 px-1"
+                          >
                             <AlertCircle className="w-3 h-3" /> {addressError}
-                          </p>
+                          </motion.p>
                         )}
                         {(isEnsName && ensAddress) && (
                           <motion.div 
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-2 p-2 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center gap-2"
+                            className="mt-3 p-3 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center gap-3"
                           >
-                            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                              <Wallet className="w-3 h-3 text-blue-400" />
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-white/5">
+                              <Wallet className="w-4 h-4 text-blue-400" />
                             </div>
-                            <span className="text-[10px] font-mono text-gray-400 truncate flex-1">{ensAddress}</span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Matched Address</span>
+                              <span className="text-xs font-mono text-gray-300 truncate">{ensAddress}</span>
+                            </div>
                           </motion.div>
                         )}
                       </div>

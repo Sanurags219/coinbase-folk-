@@ -3,12 +3,12 @@
 import { type ReactNode, useState } from 'react';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { base } from 'viem/chains';
+import { base, mainnet } from 'viem/chains';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { coinbaseWallet } from 'wagmi/connectors';
 
 const config = createConfig({
-  chains: [base],
+  chains: [base, mainnet],
   connectors: [
     coinbaseWallet({
       appName: 'Folk Wallet',
@@ -18,6 +18,7 @@ const config = createConfig({
   ssr: true,
   transports: {
     [base.id]: http(),
+    [mainnet.id]: http(),
   },
 });
 
