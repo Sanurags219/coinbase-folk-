@@ -21,7 +21,8 @@ import {
   Bell,
   Copy,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAccount, useEnsAddress } from 'wagmi';
@@ -89,6 +90,99 @@ const ActivityRow = ({ title, time, icon, iconColor, opacity = "opacity-100" }: 
   </div>
 );
 
+const assets = [
+  { name: "Ethereum", symbol: "ETH", amount: "12.4", value: "$31,241.02", change: "+1.2%", color: "bg-[#627EEA]" , icon: "Ξ" },
+  { name: "Bitcoin", symbol: "BTC", amount: "0.14", value: "$8,921.45", change: "-0.4%", changeColor: "text-red-400", color: "bg-[#F7931A]", icon: "₿" },
+  { name: "Solana", symbol: "SOL", amount: "18.2", value: "$1,906.74", change: "+5.8%", color: "bg-[#14F195]", icon: "S", iconClass: "text-black" },
+];
+
+const nfts = [
+  { id: "042", name: "Folk Farmer", emoji: "👨🌾", color: "from-indigo-500/20 to-purple-500/20", collection: "Folk Club", floor: "0.05 ETH" },
+  { id: "119", name: "Cottage Core", emoji: "🏡", color: "from-emerald-500/20 to-teal-500/20", collection: "Folk Club", floor: "0.12 ETH" },
+  { id: "088", name: "Blue Weaver", emoji: "🧶", color: "from-blue-500/20 to-cyan-500/20", collection: "Folk Club", floor: "0.08 ETH" },
+  { id: "214", name: "Harvest Moon", emoji: "🌙", color: "from-amber-500/20 to-orange-500/20", collection: "Folk Club", floor: "0.15 ETH" },
+  { id: "302", name: "Iron Smith", emoji: "⚒️", color: "from-slate-500/20 to-zinc-500/20", collection: "Folk Club", floor: "0.04 ETH" },
+  { id: "441", name: "Golden Grain", emoji: "🌾", color: "from-yellow-500/20 to-amber-500/20", collection: "Folk Club", floor: "0.09 ETH" },
+];
+
+const transactions = [
+  { 
+    id: 1, 
+    type: 'Swapped', 
+    title: 'Swapped ETH for SOL', 
+    time: '2 hours ago', 
+    amount: '0.5 ETH', 
+    status: 'Completed', 
+    icon: <ArrowLeftRight className="w-4 h-4" />, 
+    iconColor: 'bg-blue-500/20 text-blue-400',
+    hash: '0x74a...8f9e',
+    gasUsed: '21,000 units',
+    gasPrice: '1.2 Gwei',
+    to: '0x3a...ef21',
+    network: 'Base Mainnet'
+  },
+  { 
+    id: 2, 
+    type: 'Sent', 
+    title: 'Sent to 0x3...4b2', 
+    time: '5 hours ago', 
+    amount: '1.2 ETH', 
+    status: 'Completed', 
+    icon: <ArrowUpRight className="w-4 h-4" />, 
+    iconColor: 'bg-red-500/20 text-red-400',
+    hash: '0x12b...3c4d',
+    gasUsed: '21,000 units',
+    gasPrice: '0.8 Gwei',
+    to: '0x3...4b2',
+    network: 'Base Mainnet'
+  },
+  { 
+    id: 3, 
+    type: 'Received', 
+    title: 'Received from 0x7...1a9', 
+    time: 'Yesterday', 
+    amount: '0.05 BTC', 
+    status: 'Completed', 
+    icon: <ArrowDownLeft className="w-4 h-4" />, 
+    iconColor: 'bg-green-500/20 text-green-400',
+    hash: '0x98e...7f65',
+    gasUsed: 'N/A',
+    gasPrice: 'N/A',
+    to: '0x8b...72a1',
+    network: 'Bitcoin'
+  },
+  { 
+    id: 4, 
+    type: 'Swapped', 
+    title: 'Swapped USDC for wETH', 
+    time: '2 days ago', 
+    amount: '500 USDC', 
+    status: 'Completed', 
+    icon: <ArrowLeftRight className="w-4 h-4" />, 
+    iconColor: 'bg-blue-500/20 text-blue-400',
+    hash: '0x55c...de11',
+    gasUsed: '65,241 units',
+    gasPrice: '1.5 Gwei',
+    to: '0x4...9b3',
+    network: 'Base Mainnet'
+  },
+  { 
+    id: 5, 
+    type: 'Sent', 
+    title: 'Sent to 0x1...8f3', 
+    time: '3 days ago', 
+    amount: '10.5 SOL', 
+    status: 'Completed', 
+    icon: <ArrowUpRight className="w-4 h-4" />, 
+    iconColor: 'bg-red-500/20 text-red-400',
+    hash: '3sJ...4mK',
+    gasUsed: '5,000 units',
+    gasPrice: '0.000005 SOL',
+    to: '0x1...8f3',
+    network: 'Solana'
+  },
+];
+
 export default function FolkWalletPage() {
   const { isConnected, address } = useAccount();
   const [isReady, setIsReady] = useState(false);
@@ -100,6 +194,8 @@ export default function FolkWalletPage() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [sendRecipient, setSendRecipient] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+  const [sendToken, setSendToken] = useState(assets[0]); // Default to first asset
+  const [isTokenSelectorOpen, setIsTokenSelectorOpen] = useState(false);
   const [txStatus, setTxStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const [addressError, setAddressError] = useState<string | null>(null);
   const [copiedRecipient, setCopiedRecipient] = useState(false);
@@ -198,99 +294,6 @@ export default function FolkWalletPage() {
     };
     initialize();
   }, []);
-
-  const assets = [
-    { name: "Ethereum", symbol: "ETH", amount: "12.4", value: "$31,241.02", change: "+1.2%", color: "bg-[#627EEA]" , icon: "Ξ" },
-    { name: "Bitcoin", symbol: "BTC", amount: "0.14", value: "$8,921.45", change: "-0.4%", changeColor: "text-red-400", color: "bg-[#F7931A]", icon: "₿" },
-    { name: "Solana", symbol: "SOL", amount: "18.2", value: "$1,906.74", change: "+5.8%", color: "bg-[#14F195]", icon: "S", iconClass: "text-black" },
-  ];
-
-  const nfts = [
-    { id: "042", name: "Folk Farmer", emoji: "👨🌾", color: "from-indigo-500/20 to-purple-500/20", collection: "Folk Club", floor: "0.05 ETH" },
-    { id: "119", name: "Cottage Core", emoji: "🏡", color: "from-emerald-500/20 to-teal-500/20", collection: "Folk Club", floor: "0.12 ETH" },
-    { id: "088", name: "Blue Weaver", emoji: "🧶", color: "from-blue-500/20 to-cyan-500/20", collection: "Folk Club", floor: "0.08 ETH" },
-    { id: "214", name: "Harvest Moon", emoji: "🌙", color: "from-amber-500/20 to-orange-500/20", collection: "Folk Club", floor: "0.15 ETH" },
-    { id: "302", name: "Iron Smith", emoji: "⚒️", color: "from-slate-500/20 to-zinc-500/20", collection: "Folk Club", floor: "0.04 ETH" },
-    { id: "441", name: "Golden Grain", emoji: "🌾", color: "from-yellow-500/20 to-amber-500/20", collection: "Folk Club", floor: "0.09 ETH" },
-  ];
-
-  const transactions = [
-    { 
-      id: 1, 
-      type: 'Swapped', 
-      title: 'Swapped ETH for SOL', 
-      time: '2 hours ago', 
-      amount: '0.5 ETH', 
-      status: 'Completed', 
-      icon: <ArrowLeftRight className="w-4 h-4" />, 
-      iconColor: 'bg-blue-500/20 text-blue-400',
-      hash: '0x74a...8f9e',
-      gasUsed: '21,000 units',
-      gasPrice: '1.2 Gwei',
-      to: '0x3a...ef21',
-      network: 'Base Mainnet'
-    },
-    { 
-      id: 2, 
-      type: 'Sent', 
-      title: 'Sent to 0x3...4b2', 
-      time: '5 hours ago', 
-      amount: '1.2 ETH', 
-      status: 'Completed', 
-      icon: <ArrowUpRight className="w-4 h-4" />, 
-      iconColor: 'bg-red-500/20 text-red-400',
-      hash: '0x12b...3c4d',
-      gasUsed: '21,000 units',
-      gasPrice: '0.8 Gwei',
-      to: '0x3...4b2',
-      network: 'Base Mainnet'
-    },
-    { 
-      id: 3, 
-      type: 'Received', 
-      title: 'Received from 0x7...1a9', 
-      time: 'Yesterday', 
-      amount: '0.05 BTC', 
-      status: 'Completed', 
-      icon: <ArrowDownLeft className="w-4 h-4" />, 
-      iconColor: 'bg-green-500/20 text-green-400',
-      hash: '0x98e...7f65',
-      gasUsed: 'N/A',
-      gasPrice: 'N/A',
-      to: '0x8b...72a1',
-      network: 'Bitcoin'
-    },
-    { 
-      id: 4, 
-      type: 'Swapped', 
-      title: 'Swapped USDC for wETH', 
-      time: '2 days ago', 
-      amount: '500 USDC', 
-      status: 'Completed', 
-      icon: <ArrowLeftRight className="w-4 h-4" />, 
-      iconColor: 'bg-blue-500/20 text-blue-400',
-      hash: '0x55c...de11',
-      gasUsed: '65,241 units',
-      gasPrice: '1.5 Gwei',
-      to: '0x4...9b3',
-      network: 'Base Mainnet'
-    },
-    { 
-      id: 5, 
-      type: 'Sent', 
-      title: 'Sent to 0x1...8f3', 
-      time: '3 days ago', 
-      amount: '10.5 SOL', 
-      status: 'Completed', 
-      icon: <ArrowUpRight className="w-4 h-4" />, 
-      iconColor: 'bg-red-500/20 text-red-400',
-      hash: '3sJ...4mK',
-      gasUsed: '5,000 units',
-      gasPrice: '0.000005 SOL',
-      to: '0x1...8f3',
-      network: 'Solana'
-    },
-  ];
 
   const filteredTransactions = (txFilter === 'All' 
     ? transactions 
@@ -723,7 +726,10 @@ export default function FolkWalletPage() {
                                         </div>
 
                                         <div className="pt-4 border-t border-white/5">
-                                          <p className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Fee Management</p>
+                                          <p className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
+                                            <Zap className="w-3 h-3 text-blue-500/70" />
+                                            Fee Management
+                                          </p>
                                           <div className="space-y-3">
                                             <div className="flex justify-between items-center text-sm">
                                               <span className="text-gray-500">Gas Used</span>
@@ -1019,14 +1025,56 @@ export default function FolkWalletPage() {
                             value={sendAmount}
                             onChange={(e) => setSendAmount(e.target.value)}
                             disabled={txStatus === 'submitting'}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-2xl font-mono text-white placeholder:text-white/20"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 pr-32 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-2xl font-mono text-white placeholder:text-white/20"
                           />
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                             <span className="text-sm font-bold">ETH</span>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                             <button 
+                               onClick={() => setIsTokenSelectorOpen(!isTokenSelectorOpen)}
+                               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10 transition-colors"
+                             >
+                                <div className={`w-5 h-5 ${sendToken.color} rounded-full flex items-center justify-center text-[10px] font-bold`}>
+                                  {sendToken.icon}
+                                </div>
+                                <span className="text-sm font-bold">{sendToken.symbol}</span>
+                                <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isTokenSelectorOpen ? 'rotate-180' : ''}`} />
+                             </button>
+                             
+                             <AnimatePresence>
+                               {isTokenSelectorOpen && (
+                                 <motion.div 
+                                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                   animate={{ opacity: 1, y: 0, scale: 1 }}
+                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                   className="absolute right-0 top-full mt-2 w-48 bg-[#1A1C1F] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                                 >
+                                   {assets.map((asset) => (
+                                     <button
+                                       key={asset.symbol}
+                                       onClick={() => {
+                                         setSendToken(asset);
+                                         setIsTokenSelectorOpen(false);
+                                       }}
+                                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left"
+                                     >
+                                       <div className={`w-6 h-6 ${asset.color} rounded-full flex items-center justify-center text-[10px] font-bold`}>
+                                         {asset.icon}
+                                       </div>
+                                       <div>
+                                         <p className="text-xs font-bold">{asset.symbol}</p>
+                                         <p className="text-[10px] text-gray-500">{asset.name}</p>
+                                       </div>
+                                       {sendToken.symbol === asset.symbol && (
+                                         <CheckCircle2 className="w-3 h-3 text-blue-400 ml-auto" />
+                                       )}
+                                     </button>
+                                   ))}
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
-                          <span>Estimated value: ${sendAmount ? (parseFloat(sendAmount) * 2519.43).toLocaleString() : '0.00'}</span>
+                          <span>Estimated value: ${sendAmount ? (parseFloat(sendAmount) * parseFloat(sendToken.value.replace(/[^0-9.]/g, '') / parseFloat(sendToken.amount))).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</span>
                           <span>Network Fee: ~$0.42</span>
                         </p>
                       </div>
