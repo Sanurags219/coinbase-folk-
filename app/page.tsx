@@ -103,6 +103,7 @@ export default function FolkWalletPage() {
   const [txStatus, setTxStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const [addressError, setAddressError] = useState<string | null>(null);
   const [copiedRecipient, setCopiedRecipient] = useState(false);
+  const [isEnsResolvingSlowly, setIsEnsResolvingSlowly] = useState(false);
   
   // ENS Resolution Hook
   const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({
@@ -111,6 +112,17 @@ export default function FolkWalletPage() {
   });
 
   const isEnsName = sendRecipient.endsWith('.eth');
+
+  // Track slow resolution for better feedback
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isEnsLoading && isEnsName) {
+      timer = setTimeout(() => setIsEnsResolvingSlowly(true), 3000);
+    } else {
+      setIsEnsResolvingSlowly(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isEnsLoading, isEnsName]);
 
   // Address Validation
   useEffect(() => {
@@ -121,7 +133,7 @@ export default function FolkWalletPage() {
 
     if (isEnsName) {
       if (!isEnsLoading && !ensAddress && sendRecipient.length > 5) {
-        setAddressError('Invalid or unresolvable ENS name');
+        setAddressError('ENS name not found');
       } else {
         setAddressError(null);
       }
@@ -861,12 +873,17 @@ export default function FolkWalletPage() {
                       <div>
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Recipient Address</label>
                         <div className="relative">
-                          <input 
+                          <motion.input 
                             type="text" 
                             placeholder="0x... or ENS name"
                             value={sendRecipient}
                             onChange={(e) => setSendRecipient(e.target.value)}
                             disabled={txStatus === 'submitting'}
+                            animate={isEnsLoading && isEnsName ? {
+                              boxShadow: ["0 0 0px rgba(59, 130, 246, 0.2)", "0 0 15px rgba(59, 130, 246, 0.4)", "0 0 0px rgba(59, 130, 246, 0.2)"],
+                              borderColor: ["rgba(255, 255, 255, 0.1)", "rgba(59, 130, 246, 0.5)", "rgba(255, 255, 255, 0.1)"]
+                            } : {}}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
                             className={`w-full bg-white/5 border rounded-2xl py-3 px-4 pr-12 focus:outline-none transition-all font-mono text-sm ${addressError ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:ring-2 focus:ring-blue-500/50'}`}
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -891,7 +908,9 @@ export default function FolkWalletPage() {
                              {isEnsLoading && isEnsName ? (
                                <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 rounded-lg border border-blue-500/20">
                                  <RefreshCcw className="w-3 h-3 text-blue-500 animate-spin" />
-                                 <span className="text-[8px] font-bold text-blue-500 uppercase tracking-tighter">Resolving</span>
+                                 <span className="text-[8px] font-bold text-blue-500 uppercase tracking-tighter">
+                                   {isEnsResolvingSlowly ? 'Still Resolving...' : 'Resolving'}
+                                 </span>
                                </div>
                              ) : isEnsName && ensAddress ? (
                                <div className="bg-green-500/20 px-2 py-1 rounded-lg text-[9px] text-green-400 font-bold border border-green-500/20 flex items-center gap-1.5">
