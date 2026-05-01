@@ -72,6 +72,7 @@ export default function FolkWalletPage() {
   const [activeView, setActiveView] = useState<'assets' | 'transactions'>('assets');
   const [txFilter, setTxFilter] = useState<'All' | 'Sent' | 'Received' | 'Swapped'>('All');
   const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const initialize = async () => {
@@ -82,6 +83,12 @@ export default function FolkWalletPage() {
     };
     initialize();
   }, []);
+
+  const assets = [
+    { name: "Ethereum", symbol: "ETH", amount: "12.4", value: "$31,241.02", change: "+1.2%", color: "bg-[#627EEA]" , icon: "Ξ" },
+    { name: "Bitcoin", symbol: "BTC", amount: "0.14", value: "$8,921.45", change: "-0.4%", changeColor: "text-red-400", color: "bg-[#F7931A]", icon: "₿" },
+    { name: "Solana", symbol: "SOL", amount: "18.2", value: "$1,906.74", change: "+5.8%", color: "bg-[#14F195]", icon: "S", iconClass: "text-black" },
+  ];
 
   const transactions = [
     { 
@@ -161,9 +168,14 @@ export default function FolkWalletPage() {
     },
   ];
 
-  const filteredTransactions = txFilter === 'All' 
+  const filteredTransactions = (txFilter === 'All' 
     ? transactions 
-    : transactions.filter(tx => tx.type === txFilter);
+    : transactions.filter(tx => tx.type === txFilter)
+  ).filter(tx => 
+    tx.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tx.amount.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tx.hash.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen w-full bg-[#0A0B0D] text-white font-sans overflow-hidden">
@@ -213,11 +225,13 @@ export default function FolkWalletPage() {
       <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#0A0B0D]">
         {/* Header */}
         <header className="h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 shrink-0 backdrop-blur-md sticky top-0 z-20">
-          <div className="flex-1 max-w-xl relative hidden md:block">
+            <div className="flex-1 max-w-xl relative hidden md:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search assets or addresses..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
             />
           </div>
@@ -288,42 +302,43 @@ export default function FolkWalletPage() {
                   transition={{ delay: 0.1 }}
                   className="flex-1 bg-white/5 rounded-3xl border border-white/10 p-6"
                 >
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h3 className="text-lg font-bold">Assets</h3>
-                    <button className="text-sm text-blue-400 flex items-center gap-1">
-                      View all <ChevronRight className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-3.5 h-3.5" />
+                        <input 
+                          type="text" 
+                          placeholder="Filter assets..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="bg-white/5 border border-white/10 rounded-xl py-1.5 pl-9 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm w-40 md:w-48"
+                        />
+                      </div>
+                      <button className="text-sm text-blue-400 flex items-center gap-1 hover:text-blue-300 transition-colors">
+                        View all <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-4">
-                    <AssetRow 
-                      name="Ethereum" 
-                      symbol="ETH" 
-                      amount="12.4" 
-                      value="$31,241.02" 
-                      change="+1.2%" 
-                      color="bg-[#627EEA]" 
-                      icon="Ξ" 
-                    />
-                    <AssetRow 
-                      name="Bitcoin" 
-                      symbol="BTC" 
-                      amount="0.14" 
-                      value="$8,921.45" 
-                      change="-0.4%" 
-                      changeColor="text-red-400"
-                      color="bg-[#F7931A]" 
-                      icon="₿" 
-                    />
-                    <AssetRow 
-                      name="Solana" 
-                      symbol="SOL" 
-                      amount="18.2" 
-                      value="$1,906.74" 
-                      change="+5.8%" 
-                      color="bg-[#14F195]" 
-                      icon="S"
-                      iconClass="text-black"
-                    />
+                    {assets
+                      .filter(asset => 
+                        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((asset, index) => (
+                        <AssetRow 
+                          key={index}
+                          {...asset}
+                        />
+                      ))
+                    }
+                    {assets.filter(asset => 
+                      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).length === 0 && (
+                      <p className="text-center text-gray-500 py-4 text-sm italic">No assets found matching "{searchQuery}"</p>
+                    )}
                   </div>
                 </motion.div>
               </div>
